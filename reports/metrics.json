@@ -1,0 +1,14 @@
+{
+    "modelo": "EfficientNetB0",
+    "numero_clases": 20,
+    "imagenes_prueba": 1765,
+    "accuracy": 0.9677053824362606,
+    "loss": 0.09420555830001831,
+    "precision_macro": 0.9667900874375348,
+    "recall_macro": 0.9666017385804114,
+    "f1_macro": 0.9664789884022198,
+    "precision_weighted": 0.9680571579869615,
+    "recall_weighted": 0.9677053824362606,
+    "f1_weighted": 0.9676676957057264,
+    "predicciones_incorrectas": 57
+}

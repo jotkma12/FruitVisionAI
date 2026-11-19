@@ -1,0 +1,1 @@
+"""FruitVision AI inference service."""

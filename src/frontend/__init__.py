@@ -1,0 +1,1 @@
+"""FruitVision AI user interface."""
