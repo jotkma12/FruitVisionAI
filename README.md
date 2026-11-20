@@ -4,6 +4,33 @@ FruitVision AI clasifica imágenes de frutas y verduras con un modelo EfficientN
 
 El proyecto contiene la aplicación de inferencia y sus pruebas. El entrenamiento y la evaluación ya realizados se conservan como entregables; la aplicación no vuelve a entrenar el modelo.
 
+## Demo en línea
+
+Prueba FruitVision AI directamente desde el repositorio, sin instalar nada.
+
+### Aplicación web
+
+[**Abrir FruitVision AI**](https://fruitvision-ai-frontend.onrender.com)
+
+Desde la aplicación puedes cargar una imagen de una fruta o verdura y obtener una predicción real del modelo: si está fresca o podrida, la clase identificada y el nivel de confianza.
+
+### API del modelo
+
+- [Backend](https://fruitvision-ai-backend.onrender.com)
+- [Estado del servicio](https://fruitvision-ai-backend.onrender.com/health)
+- [Información del modelo y sus clases](https://fruitvision-ai-backend.onrender.com/model/info)
+- [Documentación interactiva de la API](https://fruitvision-ai-backend.onrender.com/docs)
+
+### Instrucciones para probar
+
+1. Abre el [enlace de la aplicación web](https://fruitvision-ai-frontend.onrender.com).
+2. Espera a que cargue.
+3. Selecciona una imagen de una fruta o verdura.
+4. Ejecuta la predicción.
+5. Consulta el resultado generado por el modelo.
+
+> Los servicios gratuitos de Render pueden suspenderse por inactividad. El primer acceso puede tardar algunos minutos en responder.
+
 ## Funcionalidades
 
 - Seleccionar y previsualizar una fotografía JPEG, PNG o WEBP.
