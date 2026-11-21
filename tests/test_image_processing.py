@@ -20,6 +20,11 @@ def test_prepare_image_returns_rgb_float32_in_training_range():
     np.testing.assert_allclose(batch[0, 100, 100], [12, 90, 240], atol=1)
 
 
+def test_prepare_image_rejects_dimensions_over_configured_pixel_limit():
+    with pytest.raises(InvalidImageError, match="configured pixel limit"):
+        prepare_image(png_bytes(), max_image_pixels=1_199)
+
+
 @pytest.mark.parametrize("image_format", ["JPEG", "PNG", "WEBP"])
 def test_prepare_image_accepts_each_supported_format(image_format):
     stream = BytesIO()

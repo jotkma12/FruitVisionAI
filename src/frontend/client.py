@@ -17,3 +17,8 @@ def predict_image(image_bytes: bytes, filename: str) -> requests.Response:
 def get_model_info() -> requests.Response:
     base_url = os.getenv("FRUITVISION_API_URL", "http://127.0.0.1:8000").rstrip("/")
     return requests.get(f"{base_url}/model/info", timeout=15)
+
+
+def get_health() -> requests.Response:
+    base_url = os.getenv("FRUITVISION_API_URL", "http://127.0.0.1:8000").rstrip("/")
+    return requests.get(f"{base_url}/health", timeout=2)

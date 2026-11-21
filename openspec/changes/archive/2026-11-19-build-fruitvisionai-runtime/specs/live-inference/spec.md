@@ -1,5 +1,7 @@
 # Spec Delta
 
+> **Registro histórico:** delta spec del cambio archivado el 19 de noviembre de 2026. Para requisitos vigentes, consulta `openspec/specs/live-inference/spec.md`.
+
 ## Purpose
 
 Define el servicio que usa el modelo EfficientNetB0 exportado para clasificar en tiempo de ejecución imágenes del usuario y devuelve resultados trazables a las categorías entrenadas.

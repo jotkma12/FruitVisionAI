@@ -40,4 +40,4 @@ La interfaz MUST comunicar que la imagen está siendo procesada mientras espera 
 
 #### Scenario: Inferencia en curso
 - **WHEN** la solicitud está pendiente
-- **THEN** la interfaz muestra un estado de procesamiento y no presenta todavía un resultado como final
+- **THEN** la interfaz muestra un indicador nativo de Streamlit con el mensaje «Analizando imagen con FruitVision AI...» y no presenta todavía un resultado como final

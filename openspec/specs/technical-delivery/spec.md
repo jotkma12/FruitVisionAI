@@ -21,14 +21,14 @@ El proyecto MUST documentar requisitos previos, instalación de dependencias, co
 - **THEN** puede configurar e iniciar la aplicación siguiendo los pasos documentados
 
 ### Requirement: Las dependencias y la configuración corresponden al código
-El proyecto MUST declarar las dependencias necesarias y documentar la configuración de rutas del modelo, etiquetas y comunicación entre componentes sin incrustar credenciales ni depender de resultados de predicción precargados.
+El proyecto MUST declarar las dependencias necesarias y documentar la configuración de rutas del modelo, etiquetas, URL del backend, límite de bytes y límite de píxeles (`FRUITVISION_MAX_IMAGE_PIXELS`, predeterminado 40.000.000) sin incrustar credenciales ni depender de resultados de predicción precargados.
 
 #### Scenario: Instalación declarada
 - **WHEN** se instalan las dependencias desde el manifiesto del proyecto
 - **THEN** quedan disponibles las librerías requeridas por la aplicación y sus pruebas
 
 ### Requirement: Las pruebas cubren componentes y flujo integrado
-El proyecto MUST incluir pruebas reproducibles para validación y respuesta de inferencia, interfaz/cliente y el recorrido integrado de una fotografía hasta el resultado. Las pruebas aisladas pueden sustituir dependencias externas, pero la prueba integrada MUST ejercitar el modelo real.
+El proyecto MUST incluir pruebas reproducibles para validación y respuesta de inferencia, interfaz/cliente y el recorrido integrado de una fotografía hasta el resultado. Las pruebas aisladas pueden sustituir dependencias externas, pero la prueba integrada MUST ejercitar el modelo real. La prueba integrada actual pasa por `process_prediction` y las funciones del cliente hacia FastAPI mediante un adaptador en memoria respaldado por `TestClient`; no simula la predicción del modelo.
 
 #### Scenario: Prueba aislada de error
 - **WHEN** se ejecutan las pruebas de componente con entradas inválidas o fallos simulados
@@ -36,7 +36,7 @@ El proyecto MUST incluir pruebas reproducibles para validación y respuesta de i
 
 #### Scenario: Prueba integrada con modelo real
 - **WHEN** se ejecuta la prueba de integración con una imagen de prueba disponible y el modelo exportado
-- **THEN** la imagen atraviesa la interfaz/cliente, el servicio y el modelo real y se recibe una respuesta de inferencia
+- **THEN** la imagen atraviesa la lógica de procesamiento del frontend y el cliente, el servicio y el modelo real, y se recibe una respuesta de inferencia; la representación Streamlit se cubre aparte con pruebas de UI
 
 ### Requirement: Los entregables de entrenamiento se preservan
 El desarrollo MUST dejar sin cambios el notebook terminado, los modelos, las categorías y los artefactos de entrenamiento y evaluación; MUST NOT volver a entrenar ni regenerar estos entregables. El inventario vigente se organiza en `notebooks/`, `data/processed/`, `models/training/` y `reports/`; el modelo oficial de produccion permanece en `models/fruitvision_ai_model.keras` junto con `models/class_names.json`.

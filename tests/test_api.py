@@ -7,6 +7,7 @@ from PIL import Image
 
 from src.backend.api import app
 from src.backend.config import get_settings
+from src.backend.model_service import InvalidModelOutputError, ModelLoadError
 
 
 class FakeModel:
@@ -29,7 +30,7 @@ def test_health_and_info_report_loaded_model():
     with patch("src.backend.api.ModelService.load", autospec=True, side_effect=fake_load) as load_model, TestClient(app) as client:
         assert client.get("/health").json() == {"status": "ready", "available": True}
         info = client.get("/model/info").json()
-        assert info["model"] == "EfficientNetB0"
+        assert info["model"] == "Keras FakeModel model"
         assert len(info["categories"]) == 20
         assert load_model.call_count == 1
 
@@ -39,6 +40,21 @@ def test_predict_returns_model_response_for_upload():
         response = client.post("/predict", files={"image": ("sample.png", image_bytes(), "image/png")})
         assert response.status_code == 200
         assert response.json() == {"category": "FreshApple", "state": "Fresh", "confidence": 90.0}
+
+
+def test_predict_returns_controlled_error_for_invalid_model_scores():
+    def fake_predict(self, batch):
+        raise InvalidModelOutputError("invalid output scores")
+
+    with patch("src.backend.api.ModelService.load", fake_load), patch(
+        "src.backend.api.ModelService.predict", fake_predict
+    ), TestClient(app) as client:
+        response = client.post(
+            "/predict", files={"image": ("sample.png", image_bytes(), "image/png")}
+        )
+
+    assert response.status_code == 500
+    assert response.json() == {"detail": "Inference model returned invalid scores."}
 
 
 def test_predict_rejects_unsupported_and_empty_uploads():
@@ -59,9 +75,33 @@ def test_predict_rejects_upload_over_configured_limit():
         assert response.status_code == 413
 
 
+def test_predict_rejects_image_over_configured_pixel_limit():
+    settings = get_settings()
+    settings = settings.__class__(
+        settings.model_path,
+        settings.class_names_path,
+        max_upload_bytes=settings.max_upload_bytes,
+        max_image_pixels=399,
+    )
+    with patch("src.backend.api.get_settings", return_value=settings), patch(
+        "src.backend.api.ModelService.load", fake_load
+    ), TestClient(app) as client:
+        response = client.post(
+            "/predict", files={"image": ("sample.png", image_bytes(), "image/png")}
+        )
+
+    assert response.status_code == 400
+    assert "pixel limit" in response.json()["detail"]
+
+
 def test_failed_model_load_never_reports_ready_or_predicts():
-    with patch("src.backend.api.ModelService.load", side_effect=RuntimeError("model file unavailable")), TestClient(app) as client:
+    with patch(
+        "src.backend.api.ModelService.load",
+        side_effect=ModelLoadError("model_file_missing"),
+    ), TestClient(app) as client:
         assert client.get("/health").json() == {"status": "unavailable", "available": False}
         assert client.get("/model/info").status_code == 503
         response = client.post("/predict", files={"image": ("sample.png", image_bytes(), "image/png")})
         assert response.status_code == 503
+        assert app.state.load_error == "model_file_missing"
+        assert "model_file_missing" not in response.text

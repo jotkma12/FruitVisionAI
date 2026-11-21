@@ -1,12 +1,16 @@
 """HTTP API for live FruitVision inference."""
 
 from contextlib import asynccontextmanager
+import logging
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 
 from .config import get_settings
 from .image_processing import InvalidImageError, prepare_image
-from .model_service import ModelService
+from .model_service import InvalidModelOutputError, ModelLoadError, ModelService
+
+
+logger = logging.getLogger(__name__)
 
 
 @asynccontextmanager
@@ -18,8 +22,13 @@ async def lifespan(app: FastAPI):
     app.state.load_error = None
     try:
         service.load()
-    except Exception as exc:  # Keep the server available so health reports not-ready.
-        app.state.load_error = str(exc)
+    except ModelLoadError as exc:  # Keep the server available so health reports not-ready.
+        app.state.load_error = exc.code
+    except Exception as exc:
+        app.state.load_error = "model_load_failed"
+        logger.error(
+            "Unexpected model startup failure (exception_type=%s)", type(exc).__name__
+        )
     yield
 
 
@@ -42,7 +51,7 @@ def health(request: Request) -> dict[str, str | bool]:
 @app.get("/model/info")
 def model_info(request: Request) -> dict[str, str | list[str]]:
     service = require_service(request)
-    return {"model": "EfficientNetB0", "categories": service.class_names}
+    return {"model": service.model_name, "categories": service.class_names}
 
 
 @app.post("/predict")
@@ -52,9 +61,11 @@ async def predict(request: Request, image: UploadFile = File(...)) -> dict[str, 
     if len(raw) > request.app.state.settings.max_upload_bytes:
         raise HTTPException(status_code=413, detail="Image exceeds the configured upload limit.")
     try:
-        batch = prepare_image(raw)
+        batch = prepare_image(raw, request.app.state.settings.max_image_pixels)
         return service.predict(batch)
     except InvalidImageError as exc:
         raise HTTPException(status_code=400, detail=str(exc)) from exc
+    except InvalidModelOutputError as exc:
+        raise HTTPException(status_code=500, detail="Inference model returned invalid scores.") from exc
     except Exception as exc:
         raise HTTPException(status_code=500, detail="Inference failed for this image.") from exc

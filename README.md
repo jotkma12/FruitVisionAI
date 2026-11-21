@@ -1,6 +1,6 @@
 # FruitVision AI
 
-FruitVision AI clasifica imágenes de frutas y verduras con un modelo EfficientNetB0 ya entrenado. La persona selecciona una fotografía en una interfaz Streamlit; el frontend envía sus bytes al servicio FastAPI, que prepara la imagen y consulta el modelo. La aplicación devuelve la categoría, el estado (fresco o podrido) y la puntuación asociada a la predicción.
+FruitVision AI clasifica imágenes de frutas y verduras con el modelo Keras existente. Streamlit ofrece la interfaz y envía la imagen mediante HTTP a una API FastAPI. La API prepara la imagen, ejecuta el modelo cargado y devuelve la categoría, el estado (Fresh o Rotten) y la puntuación de salida.
 
 El proyecto contiene la aplicación de inferencia y sus pruebas. El entrenamiento y la evaluación ya realizados se conservan como entregables; la aplicación no vuelve a entrenar el modelo.
 
@@ -34,12 +34,27 @@ Desde la aplicación puedes cargar una imagen de una fruta o verdura y obtener u
 ## Funcionalidades
 
 - Seleccionar y previsualizar una fotografía JPEG, PNG o WEBP.
-- Validar la imagen y comunicar el progreso, los errores de conexión o los fallos de inferencia.
+- Validar la imagen, mostrar un indicador mientras se procesa y comunicar errores de conexión o inferencia.
 - Consultar el estado del servicio y la información del modelo.
 - Ejecutar una predicción con el modelo original y mostrar la categoría, el estado y la puntuación devuelta.
 - Conservar únicamente el resultado correspondiente a la imagen seleccionada actualmente.
 
-El clasificador contempla las 20 categorías del archivo `models/class_names.json`: diez categorías Fresh y diez Rotten, para manzana, banano, pimentón, zanahoria, pepino, mango, naranja, papa, fresa y tomate.
+El servicio toma los nombres y el orden directamente de `models/class_names.json`. Sus 20 etiquetas actuales son:
+
+```text
+FreshApple, FreshBanana, FreshBellpepper, FreshCarrot, FreshCucumber
+FreshMango, FreshOrange, FreshPotato, FreshStrawberry, FreshTomato
+RottenApple, RottenBanana, RottenBellpepper, RottenCarrot, RottenCucumber
+RottenMango, RottenOrange, RottenPotato, RottenStrawberry, RottenTomato
+```
+
+El archivo JSON sigue siendo la fuente autorizada; esta lista documenta el contenido actual y no constituye una lista alternativa de ejecución.
+
+## Arquitectura y modelo
+
+La aplicación se ejecuta como dos procesos locales: Streamlit presenta la carga, vista previa, indicador de procesamiento y resultado; FastAPI expone la API y carga una vez el modelo y las etiquetas al iniciar. Pillow valida JPEG, PNG y WEBP, convierte a RGB y prepara un tensor `float32` de 224 × 224. El modelo oficial es `models/fruitvision_ai_model.keras`; la aplicación no entrena, reexporta ni modifica el artefacto.
+
+`/model/info` identifica EfficientNetB0 cuando reconoce su estructura en el modelo cargado; para otra arquitectura informa un descriptor genérico Keras. La salida se valida antes de convertirla en porcentaje: forma correspondiente a las categorías, valores reales finitos entre 0 y 1 y suma aproximada a 1 cuando la salida usa softmax.
 
 ## Tecnologías
 
@@ -51,6 +66,7 @@ El clasificador contempla las 20 categorías del archivo `models/class_names.jso
 | Streamlit | Interfaz de carga, vista previa y resultados |
 | Pillow | Decodificación, conversión RGB y redimensionamiento |
 | Requests | Comunicación HTTP entre la interfaz y el backend |
+| python-multipart | Recepción de archivos multipart en FastAPI |
 | pytest y HTTPX | Pruebas de componentes, cliente y API |
 
 Las versiones exactas de las dependencias están declaradas en [requirements.txt](requirements.txt).
@@ -65,14 +81,14 @@ FruitVisionAI/
   models/training/                # modelos del entrenamiento
   notebooks/fruitvision_ai_entrenamiento.ipynb
   data/processed/                 # train, validation, test, manifest_clean
-  reports/                        # metricas, informes, curvas e historial
+  reports/                        # métricas, informes, curvas e historial
   src/backend/
   src/frontend/
   tests/
   docs/
 ```
 
-El notebook y los artefactos de entrenamiento y evaluacion se conservan en `notebooks/`, `data/processed/`, `models/training/` y `reports/`. La configuracion predeterminada de la aplicacion carga el modelo oficial `models/fruitvision_ai_model.keras` y las etiquetas `models/class_names.json`; no selecciona modelos de entrenamiento.
+El notebook y los artefactos de entrenamiento y evaluación se conservan en `notebooks/`, `data/processed/`, `models/training/` y `reports/`. La configuración predeterminada de la aplicación carga el modelo oficial `models/fruitvision_ai_model.keras` y las etiquetas `models/class_names.json`; no selecciona modelos de entrenamiento.
 
 ## Entregables de entrenamiento y evaluacion
 
@@ -82,7 +98,7 @@ El notebook y los artefactos de entrenamiento y evaluacion se conservan en `note
 - `reports/classification_report.csv`, `reports/confusion_matrix.csv`, `reports/errores_confusion.csv` y `reports/conflictos_excluidos.csv`
 - `reports/training_history.csv`, `reports/curvas_entrenamiento.png`, `reports/metrics.json` y `reports/training_metadata/class_names.json`
 
-El backend toma por defecto el modelo de produccion de `models/fruitvision_ai_model.keras` y las etiquetas de `models/class_names.json`. Las variables de entorno de configuracion documentadas mas abajo permiten adaptar esas rutas en otros entornos.
+El backend toma por defecto el modelo de producción de `models/fruitvision_ai_model.keras` y las etiquetas de `models/class_names.json`. Las variables de entorno de configuración documentadas más abajo permiten adaptar esas rutas en otros entornos.
 
 ## Requisitos previos
 
@@ -118,13 +134,13 @@ FastAPI ofrece su documentación interactiva en [http://127.0.0.1:8000/docs](htt
 
 ## Endpoints
 
-| Método y ruta | Propósito |
-|---|---|
-| `GET /health` | Informa si el modelo está listo para inferencia. |
-| `GET /model/info` | Devuelve el nombre del modelo y las 20 categorías en el orden cargado. |
-| `POST /predict` | Recibe el archivo en el campo multipart `image` y devuelve categoría, estado y puntuación. |
+| Método y ruta | Éxito | Errores relevantes |
+|---|---|---|
+| `GET /health` | HTTP 200 con `status` (`ready` o `unavailable`) y `available` booleano. | El estado del modelo se comunica en el JSON; esta ruta no cambia a 503. |
+| `GET /model/info` | HTTP 200 con `model` y `categories` en el orden del JSON. | HTTP 503 si el modelo no está disponible. |
+| `POST /predict` | HTTP 200 con `category`, `state` (`Fresh` o `Rotten`) y `confidence` porcentual. Recibe el campo multipart `image`. | HTTP 400 para imagen vacía, corrupta, no admitida o sobre el límite de píxeles; HTTP 413 si supera el límite de bytes; HTTP 503 si el modelo no está disponible; HTTP 500 ante fallo de inferencia o salida numérica inválida. |
 
-La carga admite JPEG, PNG y WEBP hasta el límite predeterminado de 10 MiB. El servicio responde con error para archivos vacíos, corruptos, no admitidos o superiores al límite; si el modelo no está disponible, no genera una predicción sustituta.
+El límite predeterminado por archivo es 10 MiB (10.485.760 bytes) y el límite por imagen es 40.000.000 píxeles. Si el modelo no está disponible o produce una salida inválida, el servicio no genera una predicción sustituta.
 
 ## Modelos y configuración
 
@@ -140,6 +156,7 @@ La aplicación carga las categorías desde el JSON y comprueba que su cantidad c
 | `FRUITVISION_MODEL_PATH` | `models/fruitvision_ai_model.keras` | Ruta del modelo Keras |
 | `FRUITVISION_CLASS_NAMES_PATH` | `models/class_names.json` | Ruta de las categorías |
 | `FRUITVISION_MAX_UPLOAD_BYTES` | `10485760` | Tamaño máximo de carga en bytes |
+| `FRUITVISION_MAX_IMAGE_PIXELS` | `40000000` | Máximo de píxeles por imagen, comprobado antes del redimensionamiento |
 | `FRUITVISION_API_URL` | `http://127.0.0.1:8000` | URL base del backend usada por el frontend |
 
 ## Ejecutar las pruebas
@@ -156,12 +173,14 @@ La prueba integrada con el modelo real puede ejecutarse por separado:
 .\.venv\Scripts\python.exe -m pytest tests/test_integration_model.py -q
 ```
 
-La ejecución completa registrada el 19 de noviembre de 2026 obtuvo 20 pruebas aprobadas en 8.65 segundos y una advertencia de obsolescencia de Starlette relacionada con el uso de HTTPX en `TestClient`. La advertencia no hizo fallar pruebas. El detalle de la verificación y la evidencia del preprocesamiento están en el [documento técnico](docs/technical.md).
+La verificación ejecutada el 20 de noviembre de 2026 obtuvo **42 pruebas aprobadas** y una advertencia deprecada de Starlette/TestClient relacionada con HTTPX. La advertencia no hizo fallar la suite. La prueba integrada usa el modelo real; las pruebas de componente emplean dobles para aislar respuestas y errores. Consulta los detalles y el alcance en el [documento técnico](docs/technical.md).
 
 ## Documentación relacionada
 
 - [Documento técnico académico](docs/technical.md)
 - [Guía de demostración](docs/demo.md)
 - [Inventario de integridad de artefactos](docs/artifact-integrity.md)
+
+Los documentos bajo `openspec/changes/archive/` son registros históricos de planificación. Para el estado vigente, consulta `openspec/specs/`, este README y la documentación técnica.
 
 El [notebook de entrenamiento](notebooks/fruitvision_ai_entrenamiento.ipynb) se conserva como entregable existente. La aplicación no lo ejecuta ni lo modifica.

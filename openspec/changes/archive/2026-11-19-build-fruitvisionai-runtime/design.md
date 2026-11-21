@@ -1,5 +1,7 @@
 # Design
 
+> **Registro histórico:** este diseño conserva las decisiones y supuestos de planificación del cambio archivado el 19 de noviembre de 2026. No es una descripción normativa del código actual; consulta `openspec/specs/`, `README.md` y `docs/technical.md` para el estado vigente.
+
 ## Context
 
 Ver `proposal.md` y las capacidades `live-inference`, `fruitvision-user-experience` y `technical-delivery`. El workspace ya contiene `src/backend/`, `src/frontend/`, `tests/` y `docs/`, que se reutilizarán; no se crearán carpetas paralelas. El artefacto de modelo y el JSON requeridos existen en `models/`; existen copias dentro de `FruitVisionAI/` que forman parte de los entregables terminados y se conservarán. El notebook de entrenamiento existente está localizado en `FruitVisionAI/fruitvision_ai_entrenamiento.ipynb`. Se consultará su contenido en modo de solo lectura para verificar el preprocesamiento real; no se ejecutará, editará, reconstruirá ni reemplazará.
@@ -38,7 +40,7 @@ El JSON será la única fuente de nombres y orden de categorías en ejecución. 
 
 ### Preprocesamiento como condición de compatibilidad
 
-Codex consult? en modo de solo lectura `FruitVisionAI/fruitvision_ai_entrenamiento.ipynb` y no ejecut? ninguna celda. El notebook confirma una entrada de 224 ? 224, decodificaci?n con tres canales, redimensionamiento y conversi?n a `float32`; el pipeline no escala expl?citamente los p?xeles antes de alimentar el modelo. La carga de `models/fruitvision_ai_model.keras` confirma entrada `(None, 224, 224, 3)`, salida de 20 clases y capas internas que escalan por 1/255 y normalizan con medias `[0.485, 0.456, 0.406]` y varianzas `[0.229, 0.224, 0.225]`. Por tanto, el backend decodificar? en RGB, redimensionar? a 224 ? 224 y enviar? `float32` en rango 0?255; no aplicar? escala ni normalizaci?n externas ni `preprocess_input`, para evitar duplicar las transformaciones del modelo. La evidencia detallada est? en `docs/technical.md`. El notebook y los dem?s artefactos existentes permanecer?n intactos.
+Durante la planificación archivada se propuso consultar el notebook en modo de solo lectura y sin ejecutar celdas. La verificación documentada entonces describía una entrada de 224 × 224, tres canales RGB y conversión a `float32`; el modelo incorpora sus propias capas de escalado y normalización. La ruta citada en ese plan (`FruitVisionAI/fruitvision_ai_entrenamiento.ipynb`) era un supuesto histórico: el notebook presente en el repositorio está en `notebooks/fruitvision_ai_entrenamiento.ipynb`. La implementación vigente y sus límites se documentan en `docs/technical.md`.
 
 ### Pillow para decodificación de imágenes
 

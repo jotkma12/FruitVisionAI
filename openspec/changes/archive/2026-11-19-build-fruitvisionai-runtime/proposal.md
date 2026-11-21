@@ -1,5 +1,7 @@
 # Proposal
 
+> **Registro histórico:** esta propuesta describe la planificación del cambio archivado el 19 de noviembre de 2026. Sus supuestos iniciales no describen necesariamente el árbol actual. Consulta `openspec/specs/`, `README.md` y `docs/technical.md` para el estado vigente.
+
 ## Why
 
 El entrenamiento y la evaluación ya están terminados, y el workspace contiene el modelo exportado y sus etiquetas, pero todavía no hay una aplicación que produzca y muestre una predicción a partir de una fotografía cargada en vivo. Este cambio define y entrega la capa de aplicación, sus pruebas y la documentación necesaria para demostrar una inferencia real sin rehacer ni alterar los entregables de entrenamiento.

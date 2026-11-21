@@ -1,5 +1,7 @@
 # Spec Delta
 
+> **Registro histórico:** delta spec del cambio archivado el 19 de noviembre de 2026. Para requisitos vigentes, consulta `openspec/specs/fruitvision-user-experience/spec.md`.
+
 ## Purpose
 
 Permitir que una persona cargue una fotografía y consulte en una interfaz clara el resultado que el modelo calculó para esa imagen durante la sesión.

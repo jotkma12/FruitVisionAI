@@ -1,5 +1,7 @@
 # Tasks
 
+> **Registro histórico:** esta lista conserva las tareas y afirmaciones de verificación del cambio archivado el 19 de noviembre de 2026. Los checks reflejan ese registro histórico y no sustituyen una ejecución actual; consulta `openspec/specs/`, `README.md` y `docs/technical.md` para el estado vigente.
+
 ## 1. Verificación previa y estructura
 
 - [x] 1.1 Consultar en modo de solo lectura `FruitVisionAI/fruitvision_ai_entrenamiento.ipynb` (sin ejecutar celdas) y verificar en su código el tamaño de entrada, la conversión a RGB, el rango de valores y la normalización realmente usados durante el entrenamiento; registrar la evidencia en la documentación técnica y hacer que el diseño de inferencia coincida antes de codificar el procesamiento. Si algún dato no puede confirmarse, detener la integración de inferencia hasta resolverlo. Conservar intactos el notebook y todos los artefactos existentes; no ejecutarlo, editarlo, reconstruirlo ni reemplazarlo.

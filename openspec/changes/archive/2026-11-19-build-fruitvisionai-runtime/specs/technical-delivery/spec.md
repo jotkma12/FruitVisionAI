@@ -1,5 +1,7 @@
 # Spec Delta
 
+> **Registro histórico:** delta spec del cambio archivado el 19 de noviembre de 2026. Para requisitos vigentes, consulta `openspec/specs/technical-delivery/spec.md`.
+
 ## Purpose
 
 Hacer que la aplicación pueda instalarse, ejecutarse, verificarse y sustentarse técnicamente con instrucciones reproducibles y evidencia que corresponda al comportamiento real.
